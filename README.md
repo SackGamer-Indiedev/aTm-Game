@@ -6,7 +6,7 @@ The core concept of the game is to make you relaxed and bringing back to the awa
 
 currently i'm a solo-dev developing on the core concept of the game, still in the early stage and if you've any feedbacks/suggestions it would be much more helpful! 
 
-
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Copyright © 2026 SackGamer IndieDev
 
