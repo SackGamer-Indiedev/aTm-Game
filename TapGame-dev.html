@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Stillcount DEV</title>
+<style>
+  :root{
+    --bg1:#f5f1eb;
+    --bg2:#e7ddd2;
+    --text:#46433f;
+    --text-soft:#9a948c;
+    --accent:#8fb6a3;
+    --accent-soft:rgba(143,182,163,0.22);
+    --accent2:#d9a988;
+    --surface:#ffffff;
+    --ring:#8fb6a3;
+    --danger:#cf7d6f;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; }
+  body{
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    height:100vh; width:100vw; position:relative;
+  }
+  #app{ position:absolute; inset:0; }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition: opacity 0.4s ease;
+    text-align:center;
+    padding: 24px;
+  }
+  .screen.active{ opacity:1; pointer-events:auto; }
+
+  /* Setup screen */
+  #setup-screen{ overflow-y:auto; }
+  #setup-screen .panel{
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 28px 28px 24px;
+    width: 320px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  #setup-screen h1{
+    font-size: 1.3rem; font-weight: 400; letter-spacing: 0.15em;
+    margin: 0 0 2px 0;
+  }
+  #setup-screen p.sub{
+    font-size: 0.78rem; color: var(--text-soft); margin: 0 0 20px 0;
+    letter-spacing: 0.04em;
+  }
+  .field-group{ margin-bottom: 16px; text-align:left; }
+  .field-group label{
+    display:block; font-size: 0.75rem; letter-spacing: 0.08em;
+    color: var(--text-soft); margin-bottom: 6px; text-transform: uppercase;
+  }
+  .field-row{ display:flex; gap: 10px; }
+  .field-row .field-group{ flex:1; }
+  input[type=number]{
+    width:100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    font-size: 0.95rem; color: var(--text);
+    background: var(--bg1);
+  }
+  input[type=number]:focus{ outline: 2px solid var(--accent-soft); }
+
+  .mode-toggle{
+    display:flex; border-radius: 999px; background: var(--bg1);
+    padding: 4px; margin-bottom: 16px;
+  }
+  .mode-toggle button{
+    flex:1; border:none; background:transparent; padding: 8px 0;
+    border-radius: 999px; font-size: 0.78rem; letter-spacing:0.08em;
+    color: var(--text-soft); cursor:pointer; transition: all 0.2s ease;
+  }
+  .mode-toggle button.active{ background: var(--accent); color:#fff; }
+
+  .checkbox-row{
+    display:flex; align-items:center; gap: 10px; margin-bottom: 16px;
+    font-size: 0.85rem; letter-spacing: 0.03em;
+  }
+  .checkbox-row input{ width:18px; height:18px; accent-color: var(--accent); }
+
+  .btn{
+    border: none; background: var(--accent); color:#fff;
+    padding: 14px 24px; border-radius: 999px; font-size: 0.95rem;
+    font-weight:400; letter-spacing: 0.1em; cursor:pointer; width:100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn:hover{ transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+  .btn:active{ transform: translateY(0) scale(0.98); }
+  .btn.secondary{ background: var(--surface); color: var(--text); border: 1px solid rgba(0,0,0,0.08); margin-top:10px; }
+
+  .hint{ font-size: 0.7rem; color: var(--text-soft); margin-top: 4px; line-height:1.5; }
+
+  /* Game screen */
+  #game-screen{ touch-action: none; cursor:pointer; }
+  #hud{
+    position:absolute; top:14px; left:14px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 0.72rem; line-height:1.6; text-align:left;
+    color: var(--text); min-width: 150px;
+    z-index: 5;
+  }
+  #hud .row{ display:flex; justify-content:space-between; gap: 14px; }
+  #hud .label{ color: var(--text-soft); }
+  #hud .result-match{ color: #5e9c7d; font-weight:600; }
+  #hud .result-miss{ color: var(--danger); font-weight:600; }
+
+  #edit-btn{
+    position:absolute; top:14px; right:14px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(6px);
+    border:none; border-radius: 12px;
+    padding: 10px 16px; font-size: 0.72rem; letter-spacing:0.1em;
+    color: var(--text); cursor:pointer; z-index:5;
+  }
+
+  #pause-btn{
+    position:absolute; top:14px; right: 100px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(6px);
+    border:none; border-radius: 12px;
+    padding: 10px 16px; font-size: 0.72rem; letter-spacing:0.1em;
+    color: var(--text); cursor:pointer; z-index:5;
+  }
+
+  #number-display{
+    font-size: 6rem; font-weight: 200; color: var(--text);
+    opacity: 0; transform: scale(0.85);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    letter-spacing: 0.05em;
+  }
+  #number-display.show{ opacity:1; transform: scale(1); }
+
+  #center-visual{
+    position:relative; width: 220px; height: 220px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  #live-count{
+    position:absolute; bottom: 30%; left:0; right:0; text-align:center;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 1.4rem; color: var(--text-soft); opacity:0;
+    transition: opacity 0.3s ease;
+  }
+  #live-count.show{ opacity:1; }
+
+  #breathing-circle{
+    position:absolute; width: 140px; height: 140px; border-radius: 50%;
+    background: var(--accent-soft); opacity:0; transform: scale(0.8);
+  }
+  #breathing-circle.show{ animation: breatheCircle 2.4s ease-in-out; }
+  @keyframes breatheCircle{
+    0%{ opacity:0; transform: scale(0.7); }
+    30%{ opacity:1; transform: scale(1.15); }
+    100%{ opacity:0; transform: scale(0.9); }
+  }
+
+  #glow-circle{
+    position:absolute; width: 140px; height: 140px; border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-soft), transparent 70%);
+    opacity:0; transform: scale(0.6);
+  }
+  #glow-circle.show{ animation: glowPulse 1.2s ease-out; }
+  @keyframes glowPulse{
+    0%{ opacity:0; transform: scale(0.5); }
+    35%{ opacity:1; transform: scale(1.25); }
+    100%{ opacity:0; transform: scale(1.5); }
+  }
+
+  #result-banner{
+    position:absolute; bottom: 12%; left:0; right:0; text-align:center;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 0.95rem; opacity:0; transition: opacity 0.4s ease;
+    padding: 0 24px;
+  }
+  #result-banner.show{ opacity:1; }
+  #result-banner.match{ color:#5e9c7d; }
+  #result-banner.miss{ color: var(--danger); }
+
+  .ripple{
+    position:absolute; width: 18px; height:18px; border-radius:50%;
+    background: var(--accent); opacity:0.35;
+    transform: translate(-50%,-50%) scale(0.4); pointer-events:none;
+    animation: rippleAnim 0.5s ease-out forwards;
+  }
+  @keyframes rippleAnim{
+    0%{ opacity:0.35; transform: translate(-50%,-50%) scale(0.4); }
+    100%{ opacity:0; transform: translate(-50%,-50%) scale(3.2); }
+  }
+
+  .hold-ring{ position:absolute; transform: translate(-50%,-50%); pointer-events:none; }
+  .hold-ring.fading{ transition: opacity 0.35s ease; opacity:0; }
+  .ring-glow{
+    position:absolute; width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-soft), transparent 72%);
+    transform: translate(-50%,-50%) scale(1); opacity: 0.12; pointer-events:none;
+  }
+  .ring-glow.fading{ transition: opacity 0.35s ease; opacity:0; }
+
+  /* Pause overlay */
+  #pause-overlay{
+    position:absolute; inset:0; background: rgba(245,241,235,0.92);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition: opacity 0.3s ease; z-index: 10;
+  }
+  #pause-overlay.show{ opacity:1; pointer-events:auto; }
+  #pause-overlay .panel{
+    background: var(--surface); border-radius: 16px; padding: 24px 28px;
+    font-family: 'SF Mono', 'Courier New', monospace; font-size: 0.85rem;
+    text-align:left; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    min-width: 220px;
+  }
+  #pause-overlay .panel h3{ margin:0 0 12px 0; font-size: 0.9rem; letter-spacing: 0.08em; }
+  #pause-overlay .panel .row{ display:flex; justify-content:space-between; margin-bottom:6px; gap: 16px;}
+  #pause-overlay .panel .label{ color: var(--text-soft); }
+  #pause-overlay .panel button{ margin-top: 14px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="setup-screen" class="screen active">
+    <div class="panel">
+      <h1>STILLCOUNT — DEV</h1>
+      <p class="sub">manual test harness — set exact parameters</p>
+
+      <div class="mode-toggle">
+        <button id="mode-fixed" class="active">FIXED TARGET</button>
+        <button id="mode-random">RANDOM RANGE</button>
+      </div>
+
+      <div id="fixed-fields">
+        <div class="field-group">
+          <label>Target Number</label>
+          <input type="number" id="target-input" value="10" min="1" max="999">
+        </div>
+      </div>
+
+      <div id="random-fields" style="display:none;">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Min Target</label>
+            <input type="number" id="target-min" value="3" min="1" max="999">
+          </div>
+          <div class="field-group">
+            <label>Max Target</label>
+            <input type="number" id="target-max" value="20" min="1" max="999">
+          </div>
+        </div>
+        <div class="hint">A new random target (within range) is picked every round.</div>
+      </div>
+
+      <div class="field-group">
+        <label>Flash Duration (ms)</label>
+        <input type="number" id="flash-input" value="3000" min="100" step="100">
+        <div class="hint">How long the number is visible before fading.</div>
+      </div>
+
+      <div class="field-group">
+        <label>Hold-to-Stop Duration (ms)</label>
+        <input type="number" id="hold-input" value="2000" min="100" step="100">
+        <div class="hint">How long the player must hold a press to submit their count.</div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="live-count-toggle" checked>
+        <label for="live-count-toggle" style="margin:0;">Show live tap count during play</label>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="auto-loop-toggle" checked>
+        <label for="auto-loop-toggle" style="margin:0;">Auto-continue after each round</label>
+      </div>
+
+      <button class="btn" id="start-btn">START TEST</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div id="hud">
+      <div class="row"><span class="label">target</span><span id="hud-target">—</span></div>
+      <div class="row"><span class="label">flash</span><span id="hud-flash">—</span></div>
+      <div class="row"><span class="label">hold</span><span id="hud-hold">—</span></div>
+      <div class="row"><span class="label">last</span><span id="hud-last">—</span></div>
+    </div>
+    <button id="pause-btn">PAUSE</button>
+    <button id="edit-btn">EDIT</button>
+
+    <div id="center-visual">
+      <div id="breathing-circle"></div>
+      <div id="glow-circle"></div>
+      <div id="number-display"></div>
+      <div id="live-count"></div>
+    </div>
+    <div id="result-banner"></div>
+
+    <div id="pause-overlay">
+      <div class="panel">
+        <h3>PAUSED</h3>
+        <div class="row"><span class="label">target</span><span id="p-target">—</span></div>
+        <div class="row"><span class="label">flash</span><span id="p-flash">—</span></div>
+        <div class="row"><span class="label">hold</span><span id="p-hold">—</span></div>
+        <div class="row"><span class="label">your count</span><span id="p-count">—</span></div>
+        <button class="btn" id="resume-btn">RESUME</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const screens = {
+    setup: document.getElementById('setup-screen'),
+    game: document.getElementById('game-screen'),
+  };
+  function showScreen(name){
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[name].classList.add('active');
+  }
+
+  // ---------- Setup state ----------
+  const setup = {
+    mode: 'fixed', // 'fixed' | 'random'
+    target: 10,
+    targetMin: 3,
+    targetMax: 20,
+    flashDuration: 3000,
+    holdDuration: 2000,
+    showLiveCount: true,
+    autoLoop: true,
+  };
+
+  const modeFixedBtn = document.getElementById('mode-fixed');
+  const modeRandomBtn = document.getElementById('mode-random');
+  const fixedFields = document.getElementById('fixed-fields');
+  const randomFields = document.getElementById('random-fields');
+
+  modeFixedBtn.addEventListener('click', () => {
+    setup.mode = 'fixed';
+    modeFixedBtn.classList.add('active');
+    modeRandomBtn.classList.remove('active');
+    fixedFields.style.display = '';
+    randomFields.style.display = 'none';
+  });
+  modeRandomBtn.addEventListener('click', () => {
+    setup.mode = 'random';
+    modeRandomBtn.classList.add('active');
+    modeFixedBtn.classList.remove('active');
+    fixedFields.style.display = 'none';
+    randomFields.style.display = '';
+  });
+
+  document.getElementById('start-btn').addEventListener('click', () => {
+    setup.target = parseInt(document.getElementById('target-input').value) || 10;
+    setup.targetMin = parseInt(document.getElementById('target-min').value) || 1;
+    setup.targetMax = parseInt(document.getElementById('target-max').value) || setup.targetMin;
+    if(setup.targetMax < setup.targetMin){
+      const tmp = setup.targetMin; setup.targetMin = setup.targetMax; setup.targetMax = tmp;
+    }
+    setup.flashDuration = Math.max(100, parseInt(document.getElementById('flash-input').value) || 3000);
+    setup.holdDuration = Math.max(100, parseInt(document.getElementById('hold-input').value) || 2000);
+    setup.showLiveCount = document.getElementById('live-count-toggle').checked;
+    setup.autoLoop = document.getElementById('auto-loop-toggle').checked;
+
+    ensureAudio();
+    showScreen('game');
+    startRound();
+  });
+
+  // ---------- Run state ----------
+  const run = {
+    target: 0,
+    count: 0,
+    phase: 'idle', // idle | flashing | counting | result | paused
+    activePointerId: null,
+    stopTriggered: false,
+    holdTimeout: null,
+    pausedFor: null, // stash phase to resume into
+  };
+
+  // ---------- Audio ----------
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e){ audioCtx = null; }
+    }
+  }
+  function playTone(freq, duration, type, peak){
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(peak || 0.1, now + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }
+  function soundAppear(){ playTone(392, 0.4, 'sine', 0.05); }
+  function soundMatch(){
+    playTone(523.25, 0.4, 'sine', 0.08);
+    setTimeout(()=>playTone(659.25, 0.5, 'sine', 0.08), 150);
+  }
+  function soundNoMatch(){ playTone(220, 1.0, 'sine', 0.05); }
+
+  // ---------- HUD ----------
+  const hudTarget = document.getElementById('hud-target');
+  const hudFlash = document.getElementById('hud-flash');
+  const hudHold = document.getElementById('hud-hold');
+  const hudLast = document.getElementById('hud-last');
+
+  function updateHud(){
+    hudTarget.textContent = run.target;
+    hudFlash.textContent = setup.flashDuration + 'ms';
+    hudHold.textContent = setup.holdDuration + 'ms';
+  }
+
+  // ---------- Round flow ----------
+  const numberDisplay = document.getElementById('number-display');
+  const liveCount = document.getElementById('live-count');
+  const breathingCircle = document.getElementById('breathing-circle');
+  const glowCircle = document.getElementById('glow-circle');
+  const resultBanner = document.getElementById('result-banner');
+  const gameScreen = document.getElementById('game-screen');
+
+  let flashTimer = null;
+  let counterStartTimer = null;
+  let loopTimer = null;
+
+  function randomTarget(){
+    return Math.floor(Math.random() * (setup.targetMax - setup.targetMin + 1)) + setup.targetMin;
+  }
+
+  function startRound(){
+    clearAllTimers();
+    run.count = 0;
+    run.stopTriggered = false;
+    run.activePointerId = null;
+    run.target = (setup.mode === 'random') ? randomTarget() : setup.target;
+    resultBanner.classList.remove('show', 'match', 'miss');
+    resultBanner.textContent = '';
+    updateHud();
+    updateLiveCount();
+    showNumber();
+  }
+
+  function showNumber(){
+    run.phase = 'flashing';
+    numberDisplay.textContent = run.target;
+    numberDisplay.classList.remove('show');
+    liveCount.classList.remove('show');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        numberDisplay.classList.add('show');
+        soundAppear();
+      });
+    });
+
+    flashTimer = setTimeout(() => {
+      numberDisplay.classList.remove('show');
+      counterStartTimer = setTimeout(() => beginCounting(), 500);
+    }, setup.flashDuration);
+  }
+
+  function beginCounting(){
+    run.phase = 'counting';
+    updateLiveCount();
+    if(setup.showLiveCount) liveCount.classList.add('show');
+  }
+
+  function updateLiveCount(){
+    liveCount.textContent = 'count: ' + run.count;
+  }
+
+  function evaluateResult(){
+    run.phase = 'result';
+    liveCount.classList.remove('show');
+    const match = run.count === run.target;
+    if(match){
+      glowCircle.classList.remove('show');
+      requestAnimationFrame(() => requestAnimationFrame(() => glowCircle.classList.add('show')));
+      soundMatch();
+      resultBanner.textContent = 'MATCH  —  target ' + run.target + ' = count ' + run.count;
+      resultBanner.classList.add('match');
+      hudLast.innerHTML = '<span class="result-match">MATCH (' + run.target + ')</span>';
+    } else {
+      breathingCircle.classList.remove('show');
+      requestAnimationFrame(() => requestAnimationFrame(() => breathingCircle.classList.add('show')));
+      soundNoMatch();
+      resultBanner.textContent = 'MISS  —  target ' + run.target + ', you counted ' + run.count;
+      resultBanner.classList.add('miss');
+      hudLast.innerHTML = '<span class="result-miss">MISS (' + run.count + '/' + run.target + ')</span>';
+    }
+    requestAnimationFrame(() => requestAnimationFrame(() => resultBanner.classList.add('show')));
+
+    if(setup.autoLoop){
+      loopTimer = setTimeout(() => {
+        glowCircle.classList.remove('show');
+        breathingCircle.classList.remove('show');
+        startRound();
+      }, 1800);
+    }
+  }
+
+  function clearAllTimers(){
+    if(flashTimer){ clearTimeout(flashTimer); flashTimer = null; }
+    if(counterStartTimer){ clearTimeout(counterStartTimer); counterStartTimer = null; }
+    if(loopTimer){ clearTimeout(loopTimer); loopTimer = null; }
+    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
+  }
+
+  // ---------- Pointer / tap handling ----------
+  function spawnRipple(x, y){
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    r.style.left = x + 'px';
+    r.style.top = y + 'px';
+    gameScreen.appendChild(r);
+    setTimeout(() => r.remove(), 520);
+  }
+
+  let activeRing = null;
+  let activeGlow = null;
+  let ringAnimFrame = null;
+  const RING_R = 28;
+  const CIRC = 2 * Math.PI * RING_R;
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+  function spawnRing(x, y){
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'hold-ring');
+    svg.setAttribute('width', '64');
+    svg.setAttribute('height', '64');
+    svg.setAttribute('viewBox', '0 0 64 64');
+    svg.style.left = x + 'px';
+    svg.style.top = y + 'px';
+
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', '32');
+    circle.setAttribute('cy', '32');
+    circle.setAttribute('r', String(RING_R));
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', 'var(--ring)');
+    circle.setAttribute('stroke-width', '4');
+    circle.setAttribute('stroke-linecap', 'round');
+    circle.setAttribute('stroke-dasharray', String(CIRC));
+    circle.setAttribute('stroke-dashoffset', String(CIRC));
+    circle.setAttribute('transform', 'rotate(-90 32 32)');
+    svg.appendChild(circle);
+    gameScreen.appendChild(svg);
+
+    const glow = document.createElement('div');
+    glow.className = 'ring-glow';
+    glow.style.left = x + 'px';
+    glow.style.top = y + 'px';
+    gameScreen.appendChild(glow);
+
+    return { svg, circle, glow };
+  }
+
+  function animateHold(refs, startTime){
+    function frame(now){
+      if(run.activePointerId === null) return;
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / setup.holdDuration, 1);
+      const eased = easeOutCubic(t);
+      refs.circle.setAttribute('stroke-dashoffset', String(CIRC * (1 - eased)));
+      refs.glow.style.opacity = (0.12 + 0.45 * eased).toFixed(3);
+      refs.glow.style.transform = 'translate(-50%,-50%) scale(' + (1 + eased * 0.7).toFixed(3) + ')';
+      if(t < 1 && run.activePointerId !== null && !run.stopTriggered){
+        ringAnimFrame = requestAnimationFrame(frame);
+      }
+    }
+    ringAnimFrame = requestAnimationFrame(frame);
+  }
+
+  function removeRing(immediate){
+    if(ringAnimFrame){ cancelAnimationFrame(ringAnimFrame); ringAnimFrame = null; }
+    if(activeRing){
+      const ring = activeRing, glow = activeGlow;
+      activeRing = null; activeGlow = null;
+      if(immediate){ ring.remove(); glow.remove(); }
+      else {
+        ring.classList.add('fading');
+        glow.classList.add('fading');
+        setTimeout(() => { ring.remove(); glow.remove(); }, 360);
+      }
+    }
+  }
+
+  function onPointerDown(e){
+    if(run.phase !== 'counting') return;
+    if(run.activePointerId !== null) return;
+    run.activePointerId = e.pointerId;
+    run.stopTriggered = false;
+
+    const x = e.clientX, y = e.clientY;
+    const refs = spawnRing(x, y);
+    activeRing = refs.svg; activeGlow = refs.glow;
+    animateHold(refs, performance.now());
+
+    run.holdTimeout = setTimeout(() => {
+      if(run.activePointerId === e.pointerId && run.phase === 'counting'){
+        run.stopTriggered = true;
+        removeRing(true);
+        run.activePointerId = null;
+        evaluateResult();
+      }
+    }, setup.holdDuration);
+  }
+
+  function onPointerUp(e){
+    if(run.activePointerId !== e.pointerId) return;
+    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
+    run.activePointerId = null;
+    if(run.stopTriggered) return;
+
+    if(run.phase === 'counting'){
+      run.count++;
+      updateLiveCount();
+      spawnRipple(e.clientX, e.clientY);
+    }
+    removeRing(false);
+  }
+
+  function onPointerCancel(e){
+    if(run.activePointerId !== e.pointerId) return;
+    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
+    run.activePointerId = null;
+    removeRing(true);
+  }
+
+  gameScreen.addEventListener('pointerdown', onPointerDown);
+  gameScreen.addEventListener('pointerup', onPointerUp);
+  gameScreen.addEventListener('pointercancel', onPointerCancel);
+  gameScreen.addEventListener('pointerleave', onPointerCancel);
+  gameScreen.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ---------- Pause / Edit ----------
+  const pauseOverlay = document.getElementById('pause-overlay');
+  const pauseBtn = document.getElementById('pause-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+  const editBtn = document.getElementById('edit-btn');
+
+  pauseBtn.addEventListener('click', () => {
+    if(run.phase === 'paused') return;
+    run.pausedFor = run.phase;
+    run.phase = 'paused';
+    clearAllTimers();
+    removeRing(true);
+    document.getElementById('p-target').textContent = run.target;
+    document.getElementById('p-flash').textContent = setup.flashDuration + 'ms';
+    document.getElementById('p-hold').textContent = setup.holdDuration + 'ms';
+    document.getElementById('p-count').textContent = run.count;
+    pauseOverlay.classList.add('show');
+  });
+
+  resumeBtn.addEventListener('click', () => {
+    pauseOverlay.classList.remove('show');
+    run.phase = run.pausedFor || 'counting';
+    if(run.phase === 'counting' && setup.showLiveCount) liveCount.classList.add('show');
+  });
+
+  editBtn.addEventListener('click', () => {
+    clearAllTimers();
+    removeRing(true);
+    run.phase = 'idle';
+    pauseOverlay.classList.remove('show');
+    showScreen('setup');
+  });
+
+})();
+</script>
+</body>
+</html>
