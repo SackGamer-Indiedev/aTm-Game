@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Stillcount DEV</title>
+<title>aTm Game</title>
 <style>
   :root{
     --bg1:#f5f1eb;
@@ -15,7 +15,18 @@
     --accent2:#d9a988;
     --surface:#ffffff;
     --ring:#8fb6a3;
-    --danger:#cf7d6f;
+    --transition-theme: background 0.8s ease, color 0.8s ease;
+  }
+  body.dark{
+    --bg1:#1f242b;
+    --bg2:#151920;
+    --text:#e9e5df;
+    --text-soft:#8d8a85;
+    --accent:#7eab98;
+    --accent-soft:rgba(126,171,152,0.22);
+    --accent2:#c9906f;
+    --surface:#2a313a;
+    --ring:#7eab98;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
   html,body{ margin:0; padding:0; height:100%; overflow:hidden; }
@@ -23,176 +34,180 @@
     font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
     color: var(--text);
     background: linear-gradient(135deg, var(--bg1), var(--bg2));
-    height:100vh; width:100vw; position:relative;
+    transition: var(--transition-theme);
+    height:100vh;
+    width:100vw;
+    position:relative;
   }
   #app{ position:absolute; inset:0; }
   .screen{
     position:absolute; inset:0;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     opacity:0; pointer-events:none;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.7s ease;
     text-align:center;
     padding: 24px;
   }
   .screen.active{ opacity:1; pointer-events:auto; }
 
-  /* Setup screen */
-  #setup-screen{ overflow-y:auto; }
-  #setup-screen .panel{
-    background: var(--surface);
-    border-radius: 20px;
-    padding: 28px 28px 24px;
-    width: 320px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    max-height: 90vh;
-    overflow-y: auto;
+  /* Loading */
+  #loading-screen .logo{
+    font-size: 2.4rem;
+    font-weight:300;
+    letter-spacing: 0.35em;
+    color: var(--accent);
+    animation: breathe 2.2s ease-in-out infinite;
   }
-  #setup-screen h1{
-    font-size: 1.3rem; font-weight: 400; letter-spacing: 0.15em;
-    margin: 0 0 2px 0;
+  @keyframes breathe{
+    0%,100%{ opacity:0.35; transform:scale(0.96); }
+    50%{ opacity:1; transform:scale(1.04); }
   }
-  #setup-screen p.sub{
-    font-size: 0.78rem; color: var(--text-soft); margin: 0 0 20px 0;
-    letter-spacing: 0.04em;
-  }
-  .field-group{ margin-bottom: 16px; text-align:left; }
-  .field-group label{
-    display:block; font-size: 0.75rem; letter-spacing: 0.08em;
-    color: var(--text-soft); margin-bottom: 6px; text-transform: uppercase;
-  }
-  .field-row{ display:flex; gap: 10px; }
-  .field-row .field-group{ flex:1; }
-  input[type=number]{
-    width:100%; padding: 10px 12px; border-radius: 10px;
-    border: 1px solid rgba(0,0,0,0.08);
-    font-size: 0.95rem; color: var(--text);
-    background: var(--bg1);
-  }
-  input[type=number]:focus{ outline: 2px solid var(--accent-soft); }
 
-  .mode-toggle{
-    display:flex; border-radius: 999px; background: var(--bg1);
-    padding: 4px; margin-bottom: 16px;
+  /* Home */
+  #home-screen h1{
+    font-size: 2.6rem;
+    font-weight: 200;
+    letter-spacing: 0.18em;
+    margin: 0 0 4px 0;
+    color: var(--text);
   }
-  .mode-toggle button{
-    flex:1; border:none; background:transparent; padding: 8px 0;
-    border-radius: 999px; font-size: 0.78rem; letter-spacing:0.08em;
-    color: var(--text-soft); cursor:pointer; transition: all 0.2s ease;
+  #home-screen p.tag{
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    margin: 0 0 48px 0;
+    letter-spacing: 0.06em;
+    font-weight:300;
   }
-  .mode-toggle button.active{ background: var(--accent); color:#fff; }
-
-  .checkbox-row{
-    display:flex; align-items:center; gap: 10px; margin-bottom: 16px;
-    font-size: 0.85rem; letter-spacing: 0.03em;
-  }
-  .checkbox-row input{ width:18px; height:18px; accent-color: var(--accent); }
-
+  .menu{ display:flex; flex-direction:column; gap: 16px; width: 220px; }
   .btn{
-    border: none; background: var(--accent); color:#fff;
-    padding: 14px 24px; border-radius: 999px; font-size: 0.95rem;
-    font-weight:400; letter-spacing: 0.1em; cursor:pointer; width:100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    padding: 16px 24px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight:400;
+    letter-spacing: 0.1em;
+    cursor:pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.4s ease;
   }
-  .btn:hover{ transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
-  .btn:active{ transform: translateY(0) scale(0.98); }
-  .btn.secondary{ background: var(--surface); color: var(--text); border: 1px solid rgba(0,0,0,0.08); margin-top:10px; }
+  .btn:hover{ transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+  .btn:active{ transform: translateY(0px) scale(0.98); }
+  .btn.primary{ background: var(--accent); color: #fff; }
 
-  .hint{ font-size: 0.7rem; color: var(--text-soft); margin-top: 4px; line-height:1.5; }
+  /* Settings */
+  #settings-screen h2{ font-weight:300; letter-spacing:0.18em; margin-bottom: 40px; }
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between;
+    width: 260px; margin-bottom: 22px;
+    font-size: 0.95rem; letter-spacing: 0.05em;
+    color: var(--text);
+  }
+  .switch{
+    position:relative; width:50px; height:28px; border-radius:999px;
+    background: var(--accent-soft);
+    cursor:pointer; transition: background 0.3s ease;
+    flex-shrink:0;
+  }
+  .switch::after{
+    content:''; position:absolute; top:3px; left:3px;
+    width:22px; height:22px; border-radius:50%;
+    background: var(--surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+  }
+  .switch.on{ background: var(--accent); }
+  .switch.on::after{ transform: translateX(22px); }
 
-  /* Game screen */
+  /* Game */
   #game-screen{ touch-action: none; cursor:pointer; }
-  #hud{
-    position:absolute; top:14px; left:14px;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(6px);
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-family: 'SF Mono', 'Courier New', monospace;
-    font-size: 0.72rem; line-height:1.6; text-align:left;
-    color: var(--text); min-width: 150px;
+  #exit-btn{
+    position:absolute; top:18px; right:20px;
+    width:36px; height:36px; border-radius:50%;
+    border:none; background:transparent; color: var(--text-soft);
+    font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition: background 0.2s ease, color 0.2s ease;
     z-index: 5;
   }
-  #hud .row{ display:flex; justify-content:space-between; gap: 14px; }
-  #hud .label{ color: var(--text-soft); }
-  #hud .result-match{ color: #5e9c7d; font-weight:600; }
-  #hud .result-miss{ color: var(--danger); font-weight:600; }
-
-  #edit-btn{
-    position:absolute; top:14px; right:14px;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(6px);
-    border:none; border-radius: 12px;
-    padding: 10px 16px; font-size: 0.72rem; letter-spacing:0.1em;
-    color: var(--text); cursor:pointer; z-index:5;
-  }
-
-  #pause-btn{
-    position:absolute; top:14px; right: 100px;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(6px);
-    border:none; border-radius: 12px;
-    padding: 10px 16px; font-size: 0.72rem; letter-spacing:0.1em;
-    color: var(--text); cursor:pointer; z-index:5;
-  }
+  #exit-btn:hover{ background: var(--accent-soft); color: var(--text); }
 
   #number-display{
-    font-size: 6rem; font-weight: 200; color: var(--text);
-    opacity: 0; transform: scale(0.85);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    font-size: 6.5rem;
+    font-weight: 200;
+    color: var(--text);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.6s ease, transform 0.6s ease;
     letter-spacing: 0.05em;
   }
   #number-display.show{ opacity:1; transform: scale(1); }
 
   #center-visual{
-    position:relative; width: 220px; height: 220px;
+    position:relative;
+    width: 220px; height: 220px;
     display:flex; align-items:center; justify-content:center;
   }
 
-  #live-count{
-    position:absolute; bottom: 30%; left:0; right:0; text-align:center;
-    font-family: 'SF Mono', 'Courier New', monospace;
-    font-size: 1.4rem; color: var(--text-soft); opacity:0;
-    transition: opacity 0.3s ease;
-  }
-  #live-count.show{ opacity:1; }
-
   #breathing-circle{
-    position:absolute; width: 140px; height: 140px; border-radius: 50%;
-    background: var(--accent-soft); opacity:0; transform: scale(0.8);
+    position:absolute;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    opacity:0;
+    transform: scale(0.8);
   }
-  #breathing-circle.show{ animation: breatheCircle 2.4s ease-in-out; }
+  #breathing-circle.show{
+    animation: breatheCircle 3.6s ease-in-out;
+  }
   @keyframes breatheCircle{
     0%{ opacity:0; transform: scale(0.7); }
-    30%{ opacity:1; transform: scale(1.15); }
+    20%{ opacity:1; transform: scale(1.15); }
+    50%{ opacity:1; transform: scale(0.85); }
+    80%{ opacity:1; transform: scale(1.05); }
     100%{ opacity:0; transform: scale(0.9); }
   }
 
   #glow-circle{
-    position:absolute; width: 140px; height: 140px; border-radius: 50%;
+    position:absolute;
+    width: 140px; height: 140px;
+    border-radius: 50%;
     background: radial-gradient(circle, var(--accent-soft), transparent 70%);
-    opacity:0; transform: scale(0.6);
+    opacity:0;
+    transform: scale(0.6);
   }
-  #glow-circle.show{ animation: glowPulse 1.2s ease-out; }
+  #glow-circle.show{
+    animation: glowPulse 1.6s ease-out;
+  }
   @keyframes glowPulse{
     0%{ opacity:0; transform: scale(0.5); }
     35%{ opacity:1; transform: scale(1.25); }
     100%{ opacity:0; transform: scale(1.5); }
   }
 
-  #result-banner{
-    position:absolute; bottom: 12%; left:0; right:0; text-align:center;
-    font-family: 'SF Mono', 'Courier New', monospace;
-    font-size: 0.95rem; opacity:0; transition: opacity 0.4s ease;
-    padding: 0 24px;
+  #message-display{
+    position:absolute; bottom: 14%; left:0; right:0;
+    text-align:center;
+    font-size: 1rem;
+    font-weight:300;
+    color: var(--text-soft);
+    letter-spacing: 0.04em;
+    opacity:0;
+    transition: opacity 0.8s ease;
+    padding: 0 36px;
+    line-height:1.6;
   }
-  #result-banner.show{ opacity:1; }
-  #result-banner.match{ color:#5e9c7d; }
-  #result-banner.miss{ color: var(--danger); }
+  #message-display.show{ opacity:1; }
 
+  /* Ripple for quick taps */
   .ripple{
-    position:absolute; width: 18px; height:18px; border-radius:50%;
-    background: var(--accent); opacity:0.35;
-    transform: translate(-50%,-50%) scale(0.4); pointer-events:none;
+    position:absolute;
+    width: 18px; height:18px;
+    border-radius:50%;
+    background: var(--accent);
+    opacity:0.35;
+    transform: translate(-50%,-50%) scale(0.4);
+    pointer-events:none;
     animation: rippleAnim 0.5s ease-out forwards;
   }
   @keyframes rippleAnim{
@@ -200,122 +215,76 @@
     100%{ opacity:0; transform: translate(-50%,-50%) scale(3.2); }
   }
 
-  .hold-ring{ position:absolute; transform: translate(-50%,-50%); pointer-events:none; }
+  /* Hold ring + ambient glow */
+  .hold-ring{
+    position:absolute;
+    transform: translate(-50%,-50%);
+    pointer-events:none;
+  }
   .hold-ring.fading{ transition: opacity 0.35s ease; opacity:0; }
+
   .ring-glow{
-    position:absolute; width: 100px; height: 100px; border-radius: 50%;
+    position:absolute;
+    width: 100px; height: 100px;
+    border-radius: 50%;
     background: radial-gradient(circle, var(--accent-soft), transparent 72%);
-    transform: translate(-50%,-50%) scale(1); opacity: 0.12; pointer-events:none;
+    transform: translate(-50%,-50%) scale(1);
+    opacity: 0.12;
+    pointer-events:none;
   }
   .ring-glow.fading{ transition: opacity 0.35s ease; opacity:0; }
 
-  /* Pause overlay */
-  #pause-overlay{
-    position:absolute; inset:0; background: rgba(245,241,235,0.92);
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none; transition: opacity 0.3s ease; z-index: 10;
+  /* Goodbye overlay */
+  #goodbye-screen p{
+    font-size: 1.05rem; color: var(--text-soft);
+    max-width: 320px; line-height:1.7; margin-bottom: 32px; font-weight:300;
   }
-  #pause-overlay.show{ opacity:1; pointer-events:auto; }
-  #pause-overlay .panel{
-    background: var(--surface); border-radius: 16px; padding: 24px 28px;
-    font-family: 'SF Mono', 'Courier New', monospace; font-size: 0.85rem;
-    text-align:left; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    min-width: 220px;
-  }
-  #pause-overlay .panel h3{ margin:0 0 12px 0; font-size: 0.9rem; letter-spacing: 0.08em; }
-  #pause-overlay .panel .row{ display:flex; justify-content:space-between; margin-bottom:6px; gap: 16px;}
-  #pause-overlay .panel .label{ color: var(--text-soft); }
-  #pause-overlay .panel button{ margin-top: 14px; }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <div id="setup-screen" class="screen active">
-    <div class="panel">
-      <h1>STILLCOUNT — DEV</h1>
-      <p class="sub">manual test harness — set exact parameters</p>
+  <div id="loading-screen" class="screen active">
+    <div class="logo">STILLCOUNT</div>
+  </div>
 
-      <div class="mode-toggle">
-        <button id="mode-fixed" class="active">FIXED TARGET</button>
-        <button id="mode-random">RANDOM RANGE</button>
-      </div>
-
-      <div id="fixed-fields">
-        <div class="field-group">
-          <label>Target Number</label>
-          <input type="number" id="target-input" value="10" min="1" max="999">
-        </div>
-      </div>
-
-      <div id="random-fields" style="display:none;">
-        <div class="field-row">
-          <div class="field-group">
-            <label>Min Target</label>
-            <input type="number" id="target-min" value="3" min="1" max="999">
-          </div>
-          <div class="field-group">
-            <label>Max Target</label>
-            <input type="number" id="target-max" value="20" min="1" max="999">
-          </div>
-        </div>
-        <div class="hint">A new random target (within range) is picked every round.</div>
-      </div>
-
-      <div class="field-group">
-        <label>Flash Duration (ms)</label>
-        <input type="number" id="flash-input" value="3000" min="100" step="100">
-        <div class="hint">How long the number is visible before fading.</div>
-      </div>
-
-      <div class="field-group">
-        <label>Hold-to-Stop Duration (ms)</label>
-        <input type="number" id="hold-input" value="2000" min="100" step="100">
-        <div class="hint">How long the player must hold a press to submit their count.</div>
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="live-count-toggle" checked>
-        <label for="live-count-toggle" style="margin:0;">Show live tap count during play</label>
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="auto-loop-toggle" checked>
-        <label for="auto-loop-toggle" style="margin:0;">Auto-continue after each round</label>
-      </div>
-
-      <button class="btn" id="start-btn">START TEST</button>
+  <div id="home-screen" class="screen">
+    <h1>STILLCOUNT</h1>
+    <p class="tag">a quiet place to count</p>
+    <div class="menu">
+      <button class="btn primary" id="start-btn">Start</button>
+      <button class="btn" id="settings-btn">Settings</button>
+      <button class="btn" id="quit-btn">Quit</button>
     </div>
   </div>
 
-  <div id="game-screen" class="screen">
-    <div id="hud">
-      <div class="row"><span class="label">target</span><span id="hud-target">—</span></div>
-      <div class="row"><span class="label">flash</span><span id="hud-flash">—</span></div>
-      <div class="row"><span class="label">hold</span><span id="hud-hold">—</span></div>
-      <div class="row"><span class="label">last</span><span id="hud-last">—</span></div>
+  <div id="settings-screen" class="screen">
+    <h2>SETTINGS</h2>
+    <div class="setting-row">
+      <span>Sound</span>
+      <div class="switch on" id="sound-switch"></div>
     </div>
-    <button id="pause-btn">PAUSE</button>
-    <button id="edit-btn">EDIT</button>
+    <div class="setting-row">
+      <span>Dark theme</span>
+      <div class="switch" id="theme-switch"></div>
+    </div>
+    <button class="btn" id="back-btn" style="margin-top:24px;">Back</button>
+  </div>
 
+  <div id="game-screen" class="screen">
+    <button id="exit-btn">×</button>
     <div id="center-visual">
       <div id="breathing-circle"></div>
       <div id="glow-circle"></div>
       <div id="number-display"></div>
-      <div id="live-count"></div>
     </div>
-    <div id="result-banner"></div>
+    <div id="message-display"></div>
+  </div>
 
-    <div id="pause-overlay">
-      <div class="panel">
-        <h3>PAUSED</h3>
-        <div class="row"><span class="label">target</span><span id="p-target">—</span></div>
-        <div class="row"><span class="label">flash</span><span id="p-flash">—</span></div>
-        <div class="row"><span class="label">hold</span><span id="p-hold">—</span></div>
-        <div class="row"><span class="label">your count</span><span id="p-count">—</span></div>
-        <button class="btn" id="resume-btn">RESUME</button>
-      </div>
-    </div>
+  <div id="goodbye-screen" class="screen">
+    <h2 style="font-weight:300; letter-spacing:0.18em;">TAKE CARE</h2>
+    <p>Thank you for taking a quiet moment for yourself. You can return anytime.</p>
+    <button class="btn primary" id="return-btn">Return Home</button>
   </div>
 
 </div>
@@ -323,73 +292,35 @@
 <script>
 (function(){
   const screens = {
-    setup: document.getElementById('setup-screen'),
+    loading: document.getElementById('loading-screen'),
+    home: document.getElementById('home-screen'),
+    settings: document.getElementById('settings-screen'),
     game: document.getElementById('game-screen'),
+    goodbye: document.getElementById('goodbye-screen'),
   };
+
   function showScreen(name){
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[name].classList.add('active');
   }
 
-  // ---------- Setup state ----------
-  const setup = {
-    mode: 'fixed', // 'fixed' | 'random'
-    target: 10,
-    targetMin: 3,
-    targetMax: 20,
-    flashDuration: 3000,
-    holdDuration: 2000,
-    showLiveCount: true,
-    autoLoop: true,
-  };
-
-  const modeFixedBtn = document.getElementById('mode-fixed');
-  const modeRandomBtn = document.getElementById('mode-random');
-  const fixedFields = document.getElementById('fixed-fields');
-  const randomFields = document.getElementById('random-fields');
-
-  modeFixedBtn.addEventListener('click', () => {
-    setup.mode = 'fixed';
-    modeFixedBtn.classList.add('active');
-    modeRandomBtn.classList.remove('active');
-    fixedFields.style.display = '';
-    randomFields.style.display = 'none';
-  });
-  modeRandomBtn.addEventListener('click', () => {
-    setup.mode = 'random';
-    modeRandomBtn.classList.add('active');
-    modeFixedBtn.classList.remove('active');
-    fixedFields.style.display = 'none';
-    randomFields.style.display = '';
-  });
-
-  document.getElementById('start-btn').addEventListener('click', () => {
-    setup.target = parseInt(document.getElementById('target-input').value) || 10;
-    setup.targetMin = parseInt(document.getElementById('target-min').value) || 1;
-    setup.targetMax = parseInt(document.getElementById('target-max').value) || setup.targetMin;
-    if(setup.targetMax < setup.targetMin){
-      const tmp = setup.targetMin; setup.targetMin = setup.targetMax; setup.targetMax = tmp;
-    }
-    setup.flashDuration = Math.max(100, parseInt(document.getElementById('flash-input').value) || 3000);
-    setup.holdDuration = Math.max(100, parseInt(document.getElementById('hold-input').value) || 2000);
-    setup.showLiveCount = document.getElementById('live-count-toggle').checked;
-    setup.autoLoop = document.getElementById('auto-loop-toggle').checked;
-
-    ensureAudio();
-    showScreen('game');
-    startRound();
-  });
-
-  // ---------- Run state ----------
-  const run = {
+  // ---------- State ----------
+  const state = {
+    difficulty: 1,       // invisible adaptive difficulty, no on-screen number
     target: 0,
     count: 0,
-    phase: 'idle', // idle | flashing | counting | result | paused
+    flashDuration: 5500,
+    soundOn: true,
+    phase: 'idle',        // idle | flashing | counting | result
     activePointerId: null,
     stopTriggered: false,
     holdTimeout: null,
-    pausedFor: null, // stash phase to resume into
+    holdStartTime: null,
   };
+
+  const DIFFICULTY_MIN = 1;
+  const DIFFICULTY_MAX = 40;
+  const HOLD_MS = 2000;
 
   // ---------- Audio ----------
   let audioCtx = null;
@@ -400,7 +331,7 @@
     }
   }
   function playTone(freq, duration, type, peak){
-    if(!audioCtx) return;
+    if(!state.soundOn || !audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = type || 'sine';
@@ -413,59 +344,95 @@
     osc.start(now);
     osc.stop(now + duration + 0.05);
   }
-  function soundAppear(){ playTone(392, 0.4, 'sine', 0.05); }
+  function soundAppear(){ playTone(392, 0.5, 'sine', 0.06); }
   function soundMatch(){
-    playTone(523.25, 0.4, 'sine', 0.08);
-    setTimeout(()=>playTone(659.25, 0.5, 'sine', 0.08), 150);
+    playTone(523.25, 0.45, 'sine', 0.09);
+    setTimeout(()=>playTone(659.25, 0.55, 'sine', 0.09), 160);
   }
-  function soundNoMatch(){ playTone(220, 1.0, 'sine', 0.05); }
+  function soundNoMatch(){ playTone(220, 1.3, 'sine', 0.06); }
 
-  // ---------- HUD ----------
-  const hudTarget = document.getElementById('hud-target');
-  const hudFlash = document.getElementById('hud-flash');
-  const hudHold = document.getElementById('hud-hold');
-  const hudLast = document.getElementById('hud-last');
+  // ---------- Theme / Settings ----------
+  const soundSwitch = document.getElementById('sound-switch');
+  const themeSwitch = document.getElementById('theme-switch');
 
-  function updateHud(){
-    hudTarget.textContent = run.target;
-    hudFlash.textContent = setup.flashDuration + 'ms';
-    hudHold.textContent = setup.holdDuration + 'ms';
+  soundSwitch.addEventListener('click', () => {
+    state.soundOn = !state.soundOn;
+    soundSwitch.classList.toggle('on', state.soundOn);
+  });
+  themeSwitch.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeSwitch.classList.toggle('on');
+  });
+
+  // ---------- Navigation ----------
+  document.getElementById('settings-btn').addEventListener('click', () => showScreen('settings'));
+  document.getElementById('back-btn').addEventListener('click', () => showScreen('home'));
+  document.getElementById('quit-btn').addEventListener('click', () => showScreen('goodbye'));
+  document.getElementById('return-btn').addEventListener('click', () => showScreen('home'));
+  document.getElementById('exit-btn').addEventListener('click', () => {
+    resetRoundVisuals();
+    state.phase = 'idle';
+    showScreen('home');
+  });
+
+  document.getElementById('start-btn').addEventListener('click', () => {
+    ensureAudio();
+    state.difficulty = 1;
+    showScreen('game');
+    startRound(false);
+  });
+
+  // ---------- Adaptive difficulty ----------
+  // Difficulty is invisible to the player. It nudges up after a match,
+  // and eases back down after a miss -- the game gently follows you.
+  function getTargetRange(difficulty){
+    const min = Math.max(2, Math.round(difficulty));
+    const max = Math.min(min + 5 + Math.floor(difficulty / 2), 80);
+    return { min, max: Math.max(min + 2, max) };
+  }
+  function getFlashDuration(difficulty){
+    // Slow, gentle decrease -- never feels rushed even at higher difficulty.
+    return Math.max(1800, 5500 - difficulty * 90);
+  }
+  function randomTarget(difficulty){
+    const { min, max } = getTargetRange(difficulty);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   // ---------- Round flow ----------
   const numberDisplay = document.getElementById('number-display');
-  const liveCount = document.getElementById('live-count');
+  const messageDisplay = document.getElementById('message-display');
   const breathingCircle = document.getElementById('breathing-circle');
   const glowCircle = document.getElementById('glow-circle');
-  const resultBanner = document.getElementById('result-banner');
   const gameScreen = document.getElementById('game-screen');
 
-  let flashTimer = null;
-  let counterStartTimer = null;
-  let loopTimer = null;
+  const noMatchMessages = [
+    "That's okay — take a breath. You've got this.",
+    "No need to judge. Just breathe, and try again.",
+    "The mind wanders sometimes — gently come back.",
+    "Take it slow. One more try, with kindness.",
+    "Notice, breathe, and begin again — you're doing fine.",
+    "Nothing went wrong here. Settle in, and try once more."
+  ];
 
-  function randomTarget(){
-    return Math.floor(Math.random() * (setup.targetMax - setup.targetMin + 1)) + setup.targetMin;
-  }
-
-  function startRound(){
-    clearAllTimers();
-    run.count = 0;
-    run.stopTriggered = false;
-    run.activePointerId = null;
-    run.target = (setup.mode === 'random') ? randomTarget() : setup.target;
-    resultBanner.classList.remove('show', 'match', 'miss');
-    resultBanner.textContent = '';
-    updateHud();
-    updateLiveCount();
+  function startRound(isRetry){
+    state.count = 0;
+    state.stopTriggered = false;
+    state.activePointerId = null;
+    if(state.holdTimeout){ clearTimeout(state.holdTimeout); state.holdTimeout = null; }
+    if(!isRetry){
+      state.target = randomTarget(state.difficulty);
+      state.flashDuration = getFlashDuration(state.difficulty);
+    }
+    messageDisplay.classList.remove('show');
+    messageDisplay.textContent = '';
     showNumber();
   }
 
   function showNumber(){
-    run.phase = 'flashing';
-    numberDisplay.textContent = run.target;
+    state.phase = 'flashing';
+    numberDisplay.textContent = state.target;
     numberDisplay.classList.remove('show');
-    liveCount.classList.remove('show');
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         numberDisplay.classList.add('show');
@@ -473,57 +440,48 @@
       });
     });
 
-    flashTimer = setTimeout(() => {
+    setTimeout(() => {
       numberDisplay.classList.remove('show');
-      counterStartTimer = setTimeout(() => beginCounting(), 500);
-    }, setup.flashDuration);
+      setTimeout(() => beginCounting(), 650);
+    }, state.flashDuration);
   }
 
   function beginCounting(){
-    run.phase = 'counting';
-    updateLiveCount();
-    if(setup.showLiveCount) liveCount.classList.add('show');
-  }
-
-  function updateLiveCount(){
-    liveCount.textContent = 'count: ' + run.count;
+    state.phase = 'counting';
   }
 
   function evaluateResult(){
-    run.phase = 'result';
-    liveCount.classList.remove('show');
-    const match = run.count === run.target;
+    state.phase = 'result';
+    const match = state.count === state.target;
     if(match){
       glowCircle.classList.remove('show');
-      requestAnimationFrame(() => requestAnimationFrame(() => glowCircle.classList.add('show')));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => glowCircle.classList.add('show'));
+      });
       soundMatch();
-      resultBanner.textContent = 'MATCH  —  target ' + run.target + ' = count ' + run.count;
-      resultBanner.classList.add('match');
-      hudLast.innerHTML = '<span class="result-match">MATCH (' + run.target + ')</span>';
+      state.difficulty = Math.min(state.difficulty + 0.35, DIFFICULTY_MAX);
+      setTimeout(() => {
+        glowCircle.classList.remove('show');
+        startRound(false);
+      }, 1700);
     } else {
       breathingCircle.classList.remove('show');
-      requestAnimationFrame(() => requestAnimationFrame(() => breathingCircle.classList.add('show')));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => breathingCircle.classList.add('show'));
+      });
+      const msg = noMatchMessages[Math.floor(Math.random() * noMatchMessages.length)];
+      messageDisplay.textContent = msg;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => messageDisplay.classList.add('show'));
+      });
       soundNoMatch();
-      resultBanner.textContent = 'MISS  —  target ' + run.target + ', you counted ' + run.count;
-      resultBanner.classList.add('miss');
-      hudLast.innerHTML = '<span class="result-miss">MISS (' + run.count + '/' + run.target + ')</span>';
-    }
-    requestAnimationFrame(() => requestAnimationFrame(() => resultBanner.classList.add('show')));
-
-    if(setup.autoLoop){
-      loopTimer = setTimeout(() => {
-        glowCircle.classList.remove('show');
+      state.difficulty = Math.max(state.difficulty - 0.5, DIFFICULTY_MIN);
+      setTimeout(() => {
         breathingCircle.classList.remove('show');
-        startRound();
-      }, 1800);
+        messageDisplay.classList.remove('show');
+        startRound(true);
+      }, 3600);
     }
-  }
-
-  function clearAllTimers(){
-    if(flashTimer){ clearTimeout(flashTimer); flashTimer = null; }
-    if(counterStartTimer){ clearTimeout(counterStartTimer); counterStartTimer = null; }
-    if(loopTimer){ clearTimeout(loopTimer); loopTimer = null; }
-    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
   }
 
   // ---------- Pointer / tap handling ----------
@@ -541,6 +499,7 @@
   let ringAnimFrame = null;
   const RING_R = 28;
   const CIRC = 2 * Math.PI * RING_R;
+
   function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 
   function spawnRing(x, y){
@@ -578,14 +537,14 @@
 
   function animateHold(refs, startTime){
     function frame(now){
-      if(run.activePointerId === null) return;
+      if(state.activePointerId === null) return;
       const elapsed = now - startTime;
-      const t = Math.min(elapsed / setup.holdDuration, 1);
+      const t = Math.min(elapsed / HOLD_MS, 1);
       const eased = easeOutCubic(t);
       refs.circle.setAttribute('stroke-dashoffset', String(CIRC * (1 - eased)));
       refs.glow.style.opacity = (0.12 + 0.45 * eased).toFixed(3);
       refs.glow.style.transform = 'translate(-50%,-50%) scale(' + (1 + eased * 0.7).toFixed(3) + ')';
-      if(t < 1 && run.activePointerId !== null && !run.stopTriggered){
+      if(t < 1 && state.activePointerId !== null && !state.stopTriggered){
         ringAnimFrame = requestAnimationFrame(frame);
       }
     }
@@ -597,8 +556,9 @@
     if(activeRing){
       const ring = activeRing, glow = activeGlow;
       activeRing = null; activeGlow = null;
-      if(immediate){ ring.remove(); glow.remove(); }
-      else {
+      if(immediate){
+        ring.remove(); glow.remove();
+      } else {
         ring.classList.add('fading');
         glow.classList.add('fading');
         setTimeout(() => { ring.remove(); glow.remove(); }, 360);
@@ -607,44 +567,45 @@
   }
 
   function onPointerDown(e){
-    if(run.phase !== 'counting') return;
-    if(run.activePointerId !== null) return;
-    run.activePointerId = e.pointerId;
-    run.stopTriggered = false;
+    if(state.phase !== 'counting') return;
+    if(state.activePointerId !== null) return; // single-touch v1
+    state.activePointerId = e.pointerId;
+    state.stopTriggered = false;
 
     const x = e.clientX, y = e.clientY;
     const refs = spawnRing(x, y);
-    activeRing = refs.svg; activeGlow = refs.glow;
-    animateHold(refs, performance.now());
+    activeRing = refs.svg;
+    activeGlow = refs.glow;
+    const startTime = performance.now();
+    animateHold(refs, startTime);
 
-    run.holdTimeout = setTimeout(() => {
-      if(run.activePointerId === e.pointerId && run.phase === 'counting'){
-        run.stopTriggered = true;
+    state.holdTimeout = setTimeout(() => {
+      if(state.activePointerId === e.pointerId && state.phase === 'counting'){
+        state.stopTriggered = true;
         removeRing(true);
-        run.activePointerId = null;
+        state.activePointerId = null;
         evaluateResult();
       }
-    }, setup.holdDuration);
+    }, HOLD_MS);
   }
 
   function onPointerUp(e){
-    if(run.activePointerId !== e.pointerId) return;
-    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
-    run.activePointerId = null;
-    if(run.stopTriggered) return;
+    if(state.activePointerId !== e.pointerId) return;
+    if(state.holdTimeout){ clearTimeout(state.holdTimeout); state.holdTimeout = null; }
+    state.activePointerId = null;
+    if(state.stopTriggered) return; // already handled by hold
 
-    if(run.phase === 'counting'){
-      run.count++;
-      updateLiveCount();
+    if(state.phase === 'counting'){
+      state.count++;
       spawnRipple(e.clientX, e.clientY);
     }
     removeRing(false);
   }
 
   function onPointerCancel(e){
-    if(run.activePointerId !== e.pointerId) return;
-    if(run.holdTimeout){ clearTimeout(run.holdTimeout); run.holdTimeout = null; }
-    run.activePointerId = null;
+    if(state.activePointerId !== e.pointerId) return;
+    if(state.holdTimeout){ clearTimeout(state.holdTimeout); state.holdTimeout = null; }
+    state.activePointerId = null;
     removeRing(true);
   }
 
@@ -654,39 +615,17 @@
   gameScreen.addEventListener('pointerleave', onPointerCancel);
   gameScreen.addEventListener('contextmenu', e => e.preventDefault());
 
-  // ---------- Pause / Edit ----------
-  const pauseOverlay = document.getElementById('pause-overlay');
-  const pauseBtn = document.getElementById('pause-btn');
-  const resumeBtn = document.getElementById('resume-btn');
-  const editBtn = document.getElementById('edit-btn');
-
-  pauseBtn.addEventListener('click', () => {
-    if(run.phase === 'paused') return;
-    run.pausedFor = run.phase;
-    run.phase = 'paused';
-    clearAllTimers();
+  function resetRoundVisuals(){
+    numberDisplay.classList.remove('show');
+    breathingCircle.classList.remove('show');
+    glowCircle.classList.remove('show');
+    messageDisplay.classList.remove('show');
+    if(state.holdTimeout){ clearTimeout(state.holdTimeout); state.holdTimeout = null; }
     removeRing(true);
-    document.getElementById('p-target').textContent = run.target;
-    document.getElementById('p-flash').textContent = setup.flashDuration + 'ms';
-    document.getElementById('p-hold').textContent = setup.holdDuration + 'ms';
-    document.getElementById('p-count').textContent = run.count;
-    pauseOverlay.classList.add('show');
-  });
+  }
 
-  resumeBtn.addEventListener('click', () => {
-    pauseOverlay.classList.remove('show');
-    run.phase = run.pausedFor || 'counting';
-    if(run.phase === 'counting' && setup.showLiveCount) liveCount.classList.add('show');
-  });
-
-  editBtn.addEventListener('click', () => {
-    clearAllTimers();
-    removeRing(true);
-    run.phase = 'idle';
-    pauseOverlay.classList.remove('show');
-    showScreen('setup');
-  });
-
+  // ---------- Boot ----------
+  setTimeout(() => showScreen('home'), 1800);
 })();
 </script>
 </body>
